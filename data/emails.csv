@@ -1,0 +1,4 @@
+id,address,classification,scope,platform,addedBy,date,notes
+1,*@trusted-vendor.com,Known Vendor,Global,M365 Defender,admin,2023-02-14,Main partner domain
+2,phishing-attempt@badactor.net,Blacklist,Global,Exchange,admin,2023-04-18,Spear-phishing campaign source
+3,marketing-newsletter@info.com,Whitelist,User-specific,M365 Defender,asmith,2023-08-20,Requested by marketing team

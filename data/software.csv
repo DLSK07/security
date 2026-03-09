@@ -1,0 +1,5 @@
+id,name,vendor,version,scope,status,addedBy,dateAdded,justification,ticket
+1,CrowdStrike Falcon,CrowdStrike,6.51,Global,Approved,admin,2023-01-15,Primary EDR solution,SEC-1024
+2,Docker Desktop,Docker Inc.,4.20,Department,Approved,admin,2023-03-22,Engineering local dev,IT-504
+3,AnyDesk,AnyDesk Software,7.1,Global,Blacklisted,admin,2023-05-10,Unauthorized remote access tool,SEC-2199
+4,ChatGPT Enterprise,OpenAI,Cloud,Global,Under Review,jdoe,2023-10-01,AI productivity evaluation,SEC-3051

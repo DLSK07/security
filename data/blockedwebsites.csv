@@ -1,0 +1,4 @@
+id,url,reason,level,enforcedVia,dateBlocked,reviewedBy,reviewDate
+1,https://thepiratebay.org,Copyright Infringement / Malware Risk,Global,DNS,2021-04-12,admin,2023-01-10
+2,https://tiktok.com,Company Policy Violation,Global,Firewall,2022-12-05,admin,2023-06-01
+3,http://suspicious-login-portal.net,Confirmed Phishing Site,Global,SASE,2023-10-20,admin,2023-10-20

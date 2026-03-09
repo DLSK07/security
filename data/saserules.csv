@@ -1,0 +1,4 @@
+id,name,type,target,listType,platform,createdBy,date,linkedTicket
+1,Block High Risk Countries,Block,Domain,Global Blocklist,Zscaler,admin,2022-11-05,SEC-890
+2,Allow GitHub Copilot IPs,Allow,URL,Whitelist,Zscaler,admin,2023-07-12,IT-1120
+3,Alert on Crypto Exchanges,Alert,App,Local Blocklist,Prisma Access,asmith,2023-09-01,SEC-2954

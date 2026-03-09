@@ -1,0 +1,4 @@
+id,name,url,category,status,platform,scope,requestor,date
+1,Salesforce,https://login.salesforce.com,CRM,Approved,SASE,Global,Sales Exec,2022-01-10
+2,Mega File Upload,https://mega.nz,File Sharing,Blocked,Firewall,Global,N/A,2022-06-15
+3,Notion,https://notion.so,Productivity,Under Review,SASE,Department,Product Team,2023-10-15
