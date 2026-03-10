@@ -27,19 +27,24 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const login = async (email, password) => {
-    const users = await dataApi.getTable('users');
-    const foundUser = users.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      setUser({
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-        role: foundUser.role
-      });
-      return { success: true };
-    } else {
-      return { success: false, message: 'Invalid email or password' };
+    try {
+      const users = await dataApi.getTable('users');
+      const foundUser = users.find(u => u.email === email && u.password === password);
+      
+      if (foundUser) {
+        setUser({
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          role: foundUser.role
+        });
+        return { success: true };
+      } else {
+        return { success: false, message: 'Invalid email or password' };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, message: 'Failed to connect to the authentication server. Please ensure the backend is running.' };
     }
   };
 
