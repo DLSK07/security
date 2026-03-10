@@ -1,4 +1,4 @@
 id,name,email,role,password,isDefault
 admin1,Super Admin,admin@security.local,Super Admin,password123,true
 user1,Standard User,user@security.local,User,password123,false
-3fz77ynx7,test,test@security.local,Super Admin,password123,
+3fz77ynx7,test,test@security.local,Viewer,password123,
