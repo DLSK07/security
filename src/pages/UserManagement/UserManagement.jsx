@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { UserPlus, Search, Edit2, Trash2, X, Check, Filter, KeyRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataApi } from '../../services/csvApi';
+import { logActivity } from '../../services/activityLogger';
 import { Button, IconButton, Badge } from '../../components/ui/Buttons';
 
 const roleColors = {
@@ -12,7 +13,7 @@ const roleColors = {
 };
 
 const UserManagement = () => {
-  const { isSuperAdmin, user: currentUser } = useAuth();
+  const { isAdmin, user: currentUser } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,7 +27,7 @@ const UserManagement = () => {
   });
 
   // Security barrier
-  if (!isSuperAdmin) {
+  if (!isAdmin) {
     return <Navigate to="/software" replace />;
   }
 
@@ -66,8 +67,10 @@ const UserManagement = () => {
 
     if (editingItem) {
       await dataApi.updateRow('users', editingItem.id, rowData);
+      await logActivity(currentUser, 'UserManagement', 'Update', `Updated user ${rowData.email}`);
     } else {
       await dataApi.addRow('users', rowData);
+      await logActivity(currentUser, 'UserManagement', 'Add', `Added new user ${rowData.email}`);
     }
     await loadData();
     handleCloseModal();
@@ -86,6 +89,7 @@ const UserManagement = () => {
     if (window.confirm(`Delete user ${userObj.email}?`)) {
       setLoading(true);
       await dataApi.deleteRow('users', userObj.id);
+      await logActivity(currentUser, 'UserManagement', 'Delete', `Deleted user ${userObj.email}`);
       await loadData();
     }
   };
@@ -102,7 +106,7 @@ const UserManagement = () => {
       <div className="module-header flex-between" style={{ marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.25rem' }}>User Management</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage portal access, roles, and passwords. (Super Admin Only)</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Manage portal access, roles, and passwords. (Admin Only)</p>
         </div>
         <Button icon={UserPlus} onClick={() => handleOpenModal()}>Add User</Button>
       </div>

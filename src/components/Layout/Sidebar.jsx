@@ -21,7 +21,7 @@ const navItems = [
 ];
 
 export const Sidebar = () => {
-  const { user, isAdmin, isSuperAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin, canEditInventory } = useAuth();
   
   return (
     <aside className="sidebar">
@@ -52,7 +52,20 @@ export const Sidebar = () => {
           </NavLink>
         ))}
         
-        {isSuperAdmin && (
+        {canEditInventory && (
+          <>
+            <div className="nav-section" style={{ marginTop: '1rem' }}>SYSTEM</div>
+            <NavLink 
+              to="/logs" 
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              <LayoutDashboard size={20} />
+              <span>Activity Logs</span>
+            </NavLink>
+          </>
+        )}
+
+        {isAdmin && (
           <>
             <div className="nav-section" style={{ marginTop: '1rem' }}>ADMINISTRATION</div>
             <NavLink 

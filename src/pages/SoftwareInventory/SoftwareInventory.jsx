@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Check, Filter, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataApi } from '../../services/csvApi';
+import { logActivity } from '../../services/activityLogger';
 import { Button, IconButton, Badge } from '../../components/ui/Buttons';
 import { downloadCsvTemplate, parseCsvFile } from '../../utils/csvUtils';
 
@@ -12,7 +13,7 @@ const statusColors = {
 };
 
 const SoftwareInventory = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, canEditInventory, user: currentUser } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,8 +78,10 @@ const SoftwareInventory = () => {
     try {
       if (editingItem) {
         await dataApi.updateRow('software', editingItem.id, rowData);
+        await logActivity(currentUser, 'Inventory', 'Update', `Updated software: ${rowData.name} ${rowData.version}`);
       } else {
         await dataApi.addRow('software', rowData);
+        await logActivity(currentUser, 'Inventory', 'Add', `Added software: ${rowData.name} ${rowData.version}`);
       }
       await loadData();
       handleCloseModal();
@@ -91,7 +94,9 @@ const SoftwareInventory = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this specific entry?')) {
       setLoading(true);
+      const itemToDelete = data.find(i => i.id === id);
       await dataApi.deleteRow('software', id);
+      await logActivity(currentUser, 'Inventory', 'Delete', `Deleted software: ${itemToDelete?.name || id}`);
       await loadData();
     }
   };
@@ -118,6 +123,7 @@ const SoftwareInventory = () => {
           dateAdded: new Date().toISOString().split('T')[0]
         });
       }
+      await logActivity(currentUser, 'Inventory', 'Import', `Imported ${parsedData.length} records into Software Inventory`);
       alert(`Successfully imported ${parsedData.length} records.`);
       await loadData();
     } catch (err) {
@@ -135,7 +141,7 @@ const SoftwareInventory = () => {
           <p style={{ color: 'var(--text-secondary)' }}>Track and manage approved and restricted software assets.</p>
         </div>
         
-        {isAdmin && (
+        {canEditInventory && (
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Button variant="secondary" icon={Download} onClick={() => downloadCsvTemplate(csvHeaders, 'software')}>
               Template
@@ -191,13 +197,13 @@ const SoftwareInventory = () => {
                 <th>Status</th>
                 <th>Ticket </th>
                 <th>Date Added</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
+                {canEditInventory && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 7 : 6} className="empty-state">
+                  <td colSpan={canEditInventory ? 7 : 6} className="empty-state">
                     No software records found.
                   </td>
                 </tr>
@@ -224,7 +230,7 @@ const SoftwareInventory = () => {
                     </td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{item.dateAdded}</td>
                     
-                    {isAdmin && (
+                    {canEditInventory && (
                       <td style={{ textAlign: 'right' }}>
                         <div className="action-buttons">
                           <IconButton icon={Edit2} onClick={() => handleOpenModal(item)} />

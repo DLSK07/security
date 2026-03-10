@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Plus, Search, Edit2, Trash2, X, Check, Filter, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataApi } from '../../services/csvApi';
+import { logActivity } from '../../services/activityLogger';
 import { Button, IconButton, Badge } from '../../components/ui/Buttons';
 import { downloadCsvTemplate, parseCsvFile } from '../../utils/csvUtils';
 
@@ -14,7 +15,7 @@ const statusColors = {
 };
 
 const WebAppRegistry = () => {
-  const { isAdmin, isViewer } = useAuth();
+  const { isAdmin, isViewer, canEditInventory, user: currentUser } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,8 +72,10 @@ const WebAppRegistry = () => {
 
     if (editingItem) {
       await dataApi.updateRow('webapps', editingItem.id, rowData);
+      await logActivity(currentUser, 'Inventory', 'Update', `Updated web app: ${rowData.name}`);
     } else {
       await dataApi.addRow('webapps', rowData);
+      await logActivity(currentUser, 'Inventory', 'Add', `Added web app: ${rowData.name}`);
     }
     await loadData();
     handleCloseModal();
@@ -82,7 +85,9 @@ const WebAppRegistry = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this web application entry?')) {
       setLoading(true);
+      const itemToDelete = data.find(i => i.id === id);
       await dataApi.deleteRow('webapps', id);
+      await logActivity(currentUser, 'Inventory', 'Delete', `Deleted web app: ${itemToDelete?.name || id}`);
       await loadData();
     }
   };
@@ -106,6 +111,7 @@ const WebAppRegistry = () => {
           date: new Date().toISOString().split('T')[0]
         });
       }
+      await logActivity(currentUser, 'Inventory', 'Import', `Imported ${parsedData.length} web apps`);
       alert(`Imported ${parsedData.length} apps.`);
       await loadData();
     } catch (err) { alert("CSV Error: " + err.message); }
@@ -120,7 +126,7 @@ const WebAppRegistry = () => {
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.25rem' }}>Web App Registry</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Track sanctioned and shadow IT web applications.</p>
         </div>
-        {isAdmin && (
+        {canEditInventory && (
            <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Button variant="secondary" icon={Download} onClick={() => downloadCsvTemplate(csvHeaders, 'webapps')}>Template</Button>
             <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
@@ -160,12 +166,12 @@ const WebAppRegistry = () => {
                 <th>Status</th>
                 <th>Platform / Scope</th>
                 <th>Requestor & Date</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
+                {canEditInventory && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filteredData.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 6 : 5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
+                <tr><td colSpan={canEditInventory ? 6 : 5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
               ) : (
                 filteredData.map(item => (
                   <tr key={item.id}>
@@ -182,7 +188,7 @@ const WebAppRegistry = () => {
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       {item.requestor} <br/> {item.date}
                     </td>
-                    {isAdmin && (
+                    {canEditInventory && (
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <IconButton icon={Edit2} onClick={() => handleOpenModal(item)} />

@@ -11,6 +11,7 @@ const WebAppRegistry = React.lazy(() => import('./pages/WebAppRegistry/WebAppReg
 const SaseRulesLog = React.lazy(() => import('./pages/SaseRulesLog/SaseRulesLog'));
 const BlockedWebsites = React.lazy(() => import('./pages/BlockedWebsites/BlockedWebsites'));
 const UserManagement = React.lazy(() => import('./pages/UserManagement/UserManagement'));
+const ActivityLogs = React.lazy(() => import('./pages/ActivityLogs/ActivityLogs'));
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
               <Route path="saserules" element={<SaseRulesLog />} />
               <Route path="blocked" element={<BlockedWebsites />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="logs" element={<ActivityLogs />} />
             </Route>
             
             <Route path="*" element={<Navigate to="/software" replace />} />

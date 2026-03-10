@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Plus, Search, Edit2, Trash2, X, Check, Filter, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataApi } from '../../services/csvApi';
+import { logActivity } from '../../services/activityLogger';
 import { Button, IconButton, Badge } from '../../components/ui/Buttons';
 import { downloadCsvTemplate, parseCsvFile } from '../../utils/csvUtils';
 
@@ -14,7 +15,7 @@ const classificationColors = {
 };
 
 const EmailRegistry = () => {
-  const { isAdmin, isViewer } = useAuth();
+  const { isAdmin, isViewer, canEditInventory, user: currentUser } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,8 +74,10 @@ const EmailRegistry = () => {
 
     if (editingItem) {
       await dataApi.updateRow('emails', editingItem.id, rowData);
+      await logActivity(currentUser, 'Inventory', 'Update', `Updated email registry: ${rowData.address}`);
     } else {
       await dataApi.addRow('emails', rowData);
+      await logActivity(currentUser, 'Inventory', 'Add', `Added email registry: ${rowData.address}`);
     }
     await loadData();
     handleCloseModal();
@@ -84,7 +87,9 @@ const EmailRegistry = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this email registry entry?')) {
       setLoading(true);
+      const itemToDelete = data.find(i => i.id === id);
       await dataApi.deleteRow('emails', id);
+      await logActivity(currentUser, 'Inventory', 'Delete', `Deleted email entry: ${itemToDelete?.address || id}`);
       await loadData();
     }
   };
@@ -109,6 +114,7 @@ const EmailRegistry = () => {
           date: new Date().toISOString().split('T')[0]
         });
       }
+      await logActivity(currentUser, 'Inventory', 'Import', `Imported ${parsedData.length} records into Email Registry`);
       alert(`Imported ${parsedData.length} entries.`);
       await loadData();
     } catch (err) { alert("CSV Error: " + err.message); }
@@ -123,7 +129,7 @@ const EmailRegistry = () => {
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.25rem' }}>Email Registry</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Manage trusted vendors and blacklisted domains/addresses.</p>
         </div>
-        {isAdmin && (
+        {canEditInventory && (
            <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Button variant="secondary" icon={Download} onClick={() => downloadCsvTemplate(csvHeaders, 'emails')}>Template</Button>
             <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
@@ -163,12 +169,12 @@ const EmailRegistry = () => {
                 <th>Scope</th>
                 <th>Platform</th>
                 <th>Added By & Date</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
+                {canEditInventory && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filteredData.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 6 : 5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
+                <tr><td colSpan={canEditInventory ? 6 : 5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
               ) : (
                 filteredData.map(item => (
                   <tr key={item.id}>
@@ -179,7 +185,7 @@ const EmailRegistry = () => {
                     <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       {item.addedBy} <br/> {item.date}
                     </td>
-                    {isAdmin && (
+                    {canEditInventory && (
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <IconButton icon={Edit2} onClick={() => handleOpenModal(item)} />

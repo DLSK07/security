@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = user?.role === 'Admin' || isSuperAdmin; // Backward compatibility with previous 'Admin' mentions
   const isUser = user?.role === 'User';
   const isViewer = user?.role === 'Viewer';
+  const canEditInventory = isAdmin || isUser;
 
   const value = {
     user,
@@ -74,7 +75,8 @@ export const AuthProvider = ({ children }) => {
     isSuperAdmin,
     isAdmin,
     isUser,
-    isViewer
+    isViewer,
+    canEditInventory
   };
 
   return (

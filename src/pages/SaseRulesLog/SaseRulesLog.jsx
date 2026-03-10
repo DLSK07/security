@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Plus, Search, Edit2, Trash2, X, Check, Filter, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataApi } from '../../services/csvApi';
+import { logActivity } from '../../services/activityLogger';
 import { Button, IconButton, Badge } from '../../components/ui/Buttons';
 import { downloadCsvTemplate, parseCsvFile } from '../../utils/csvUtils';
 
@@ -13,7 +14,7 @@ const typeColors = {
 };
 
 const SaseRulesLog = () => {
-  const { isAdmin, isViewer } = useAuth();
+  const { isAdmin, isViewer, canEditInventory, user: currentUser } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,8 +70,10 @@ const SaseRulesLog = () => {
 
     if (editingItem) {
       await dataApi.updateRow('saserules', editingItem.id, rowData);
+      await logActivity(currentUser, 'Inventory', 'Update', `Updated SASE rule: ${rowData.name}`);
     } else {
       await dataApi.addRow('saserules', rowData);
+      await logActivity(currentUser, 'Inventory', 'Add', `Added SASE rule: ${rowData.name}`);
     }
     await loadData();
     handleCloseModal();
@@ -80,7 +83,9 @@ const SaseRulesLog = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Delete this SASE rule log?')) {
       setLoading(true);
+      const itemToDelete = data.find(i => i.id === id);
       await dataApi.deleteRow('saserules', id);
+      await logActivity(currentUser, 'Inventory', 'Delete', `Deleted SASE rule: ${itemToDelete?.name || id}`);
       await loadData();
     }
   };
@@ -106,6 +111,7 @@ const SaseRulesLog = () => {
           date: new Date().toISOString().split('T')[0]
         });
       }
+      await logActivity(currentUser, 'Inventory', 'Import', `Imported ${parsedData.length} SASE rules`);
       alert(`Imported ${parsedData.length} rules.`);
       await loadData();
     } catch (err) { alert("CSV Error: " + err.message); }
@@ -120,7 +126,7 @@ const SaseRulesLog = () => {
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.25rem' }}>SASE Rules Log</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Centralized log of rules applied at the edge (SASE/SWG).</p>
         </div>
-        {isAdmin && (
+        {canEditInventory && (
            <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Button variant="secondary" icon={Download} onClick={() => downloadCsvTemplate(csvHeaders, 'saserules')}>Template</Button>
             <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
@@ -160,12 +166,12 @@ const SaseRulesLog = () => {
                 <th>Platform</th>
                 <th>Ticket</th>
                 <th>Created By/Date</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
+                {canEditInventory && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filteredData.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 7 : 6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
+                <tr><td colSpan={canEditInventory ? 7 : 6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
               ) : (
                 filteredData.map(item => (
                   <tr key={item.id}>
@@ -186,7 +192,7 @@ const SaseRulesLog = () => {
                      <td style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                       {item.createdBy} <br/> {item.date}
                     </td>
-                    {isAdmin && (
+                    {canEditInventory && (
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <IconButton icon={Edit2} onClick={() => handleOpenModal(item)} />

@@ -1,0 +1,4 @@
+date,userName,userEmail,userRole,type,action,details,id
+2026-03-10T19:26:29.049Z,Super Admin,admin@security.local,Super Admin,Inventory,Delete,Deleted email entry: phishing-attempt@badactor.net,rsxzfoof4
+2026-03-10T19:27:01.817Z,Super Admin,admin@security.local,Super Admin,UserManagement,Add,Added new user test@security.local,jd0mbd9ko
+2026-03-10T19:27:29.115Z,Super Admin,admin@security.local,Super Admin,UserManagement,Update,Updated user test@security.local,ziskj8hsq

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, Check, Filter, Download, Upload } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataApi } from '../../services/csvApi';
+import { logActivity } from '../../services/activityLogger';
 import { Button, IconButton, Badge } from '../../components/ui/Buttons';
 import { downloadCsvTemplate, parseCsvFile } from '../../utils/csvUtils';
 
@@ -11,7 +12,7 @@ const levelColors = {
 };
 
 const BlockedWebsites = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, canEditInventory, user: currentUser } = useAuth();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,8 +63,10 @@ const BlockedWebsites = () => {
 
     if (editingItem) {
       await dataApi.updateRow('blockedwebsites', editingItem.id, rowData);
+      await logActivity(currentUser, 'Inventory', 'Update', `Updated blocked site: ${rowData.url}`);
     } else {
       await dataApi.addRow('blockedwebsites', rowData);
+      await logActivity(currentUser, 'Inventory', 'Add', `Added blocked site: ${rowData.url}`);
     }
     await loadData();
     handleCloseModal();
@@ -73,7 +76,9 @@ const BlockedWebsites = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Remove this website from the blocklist?')) {
       setLoading(true);
+      const itemToDelete = data.find(i => i.id === id);
       await dataApi.deleteRow('blockedwebsites', id);
+      await logActivity(currentUser, 'Inventory', 'Delete', `Removed blocked site: ${itemToDelete?.url || id}`);
       await loadData();
     }
   };
@@ -99,6 +104,7 @@ const BlockedWebsites = () => {
           dateBlocked: new Date().toISOString().split('T')[0]
         });
       }
+      await logActivity(currentUser, 'Inventory', 'Import', `Imported ${parsedData.length} blocked sites`);
       alert(`Imported ${parsedData.length} records.`);
       await loadData();
     } catch (err) { alert("CSV Error: " + err.message); }
@@ -113,7 +119,7 @@ const BlockedWebsites = () => {
           <h1 style={{ fontSize: '1.875rem', marginBottom: '0.25rem' }}>Blocked Websites</h1>
           <p style={{ color: 'var(--text-secondary)' }}>Track explicitly blocked URLs across all enforcement platforms.</p>
         </div>
-        {isAdmin && (
+        {canEditInventory && (
            <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Button variant="secondary" icon={Download} onClick={() => downloadCsvTemplate(csvHeaders, 'blockedwebsites')}>Template</Button>
             <label className="btn btn-secondary" style={{ cursor: 'pointer' }}>
@@ -151,12 +157,12 @@ const BlockedWebsites = () => {
                 <th>Level</th>
                 <th>Enforced Via</th>
                 <th>Block/Review Date</th>
-                {isAdmin && <th style={{ textAlign: 'right' }}>Actions</th>}
+                {canEditInventory && <th style={{ textAlign: 'right' }}>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filteredData.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 6 : 5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
+                <tr><td colSpan={canEditInventory ? 6 : 5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>No entries found.</td></tr>
               ) : (
                 filteredData.map(item => (
                   <tr key={item.id}>
@@ -168,7 +174,7 @@ const BlockedWebsites = () => {
                       <div>Blocked: {item.dateBlocked}</div>
                       <div>Reviewed: {item.reviewDate}</div>
                     </td>
-                    {isAdmin && (
+                    {canEditInventory && (
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <IconButton icon={Edit2} onClick={() => handleOpenModal(item)} />
